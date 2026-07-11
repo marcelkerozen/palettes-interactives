@@ -389,6 +389,7 @@ const GLOBAL_TYPES=[
 ];
 let globalFx={active:false,type:'wave',colors:['#5dcaa5','#378add'],speed:5,brightness:85};
 let gStripCells=[]; // une grille de cellules par palette, dans l'ordre du bus
+let gChaseSpan=66;  // course de la comète, ajustée à l'étendue réelle avant chaque rendu
 
 function mixHex(a,b,m){
   const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);
@@ -402,10 +403,20 @@ function globalCellStyle(gx,gy,t,gf){
   if(gf.type==='wave'){ const w=0.5+0.5*Math.sin(gx*0.35 - t*sp/9); op*=0.2+0.8*w; if(gf.colors.length>1) col=mixHex(gf.colors[0],gf.colors[1],w); }
   else if(gf.type==='sync'){ const w=0.5+0.5*Math.sin(t*sp/18); op*=0.25+0.75*w; if(gf.colors.length>1) col=mixHex(gf.colors[0],gf.colors[1],w); }
   else if(gf.type==='rainbow'){ const h=(gx*7+gy*3+t*sp)%360; col=`hsl(${h},70%,60%)`; }
-  else if(gf.type==='chase'){ const span=totalCols()+18; const pos=(t*sp/6)%span; const d=Math.abs(gx-pos); op*= d<6?(1-d/6):0.05; }
+  else if(gf.type==='chase'){
+    const span=gChaseSpan; const pos=(t*sp/5)%span;
+    let d=pos-gx;                                   // >0 : cellule dans la traînée
+    if(d<-span/2) d+=span; else if(d>span/2) d-=span;
+    let m;
+    if(d>=-3 && d<=12) m = d<0 ? (1+d/3) : Math.max(0.08, 1-d/12);  // tête large + traînée
+    else m=0.08;
+    op*=m;
+  }
   return {col,op:Math.max(0.05,Math.min(1,op))};
 }
+function spatialSpan(){ let m=0; pallets.forEach(p=>{ const e=p.pos.x/7+N; if(e>m) m=e; }); return m+20; }
 function paintGlobal(){
+  gChaseSpan = pallets.length*N + 20;
   gStripCells.forEach((cells,k)=>{
     cells.forEach((el,i)=>{
       const r=Math.floor(i/N),c=i%N;
@@ -462,6 +473,7 @@ function tick(){
     const p=palById(ui.activePal); if(p) paint(consoleCells, p, effById(p.effectId), ui.t);
   } else if(ui.view==='overview'){
     const cellsMap = ui.ovSub==='plan' ? planCells : ovCells;
+    if(globalFx.active) gChaseSpan = spatialSpan();
     pallets.forEach(p=>{
       const cells=cellsMap[p.id]; if(!cells) return;
       if(globalFx.active) paintGlobalSpatial(cells, p, ui.t);
