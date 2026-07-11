@@ -97,3 +97,36 @@ input[type=color]{width:34px;height:30px;border:none;background:none;padding:0;b
 .ed-color-wrap:hover .rm{display:block}
 .ed-buttons{display:flex;gap:10px;margin-top:8px}
 .ed-preview .ed-grid{display:grid;background:var(--panel2);padding:8px;border-radius:8px;justify-content:center}
+
+/* --- effets globaux --- */
+.global-wrap{display:grid;grid-template-columns:280px 1fr;gap:20px}
+.global-ctrl{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
+.global-ctrl .row{margin-bottom:14px}
+.global-ctrl .row>label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.global-ctrl .btn{margin-bottom:8px}
+.global-preview{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-x:auto}
+.global-strip{display:flex;gap:22px;align-items:flex-start;padding:10px 4px}
+.global-pal{display:flex;flex-direction:column;align-items:center;gap:8px}
+.global-pal .g-grid{display:grid;background:var(--panel2);padding:6px;border-radius:8px}
+.global-pal .g-name{font-size:12px;color:var(--muted)}
+.global-link{align-self:center;color:var(--border);font-size:20px;margin-top:40px}
+
+/* --- sous-onglets (vue d'ensemble) --- */
+.subtabs{display:flex;gap:6px;margin-bottom:16px}
+.subtabs button{padding:6px 14px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-size:13px;border-radius:999px;cursor:pointer}
+.subtabs button.on{border-color:var(--accent);color:var(--accent);background:#1b2a26}
+
+/* --- plan 2D --- */
+.plan-hint{font-size:12px;margin-bottom:10px}
+.plan-area{position:relative;height:440px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;background-image:radial-gradient(var(--border) 1px,transparent 1px);background-size:26px 26px}
+.plan-pal{position:absolute;cursor:grab;user-select:none;display:flex;flex-direction:column;align-items:center;gap:5px}
+.plan-pal.drag{cursor:grabbing;z-index:5}
+.plan-pal .p-grid{display:grid;background:var(--panel2);padding:5px;border-radius:7px;border:1px solid var(--border)}
+.plan-pal .p-name{font-size:11px;color:var(--muted)}
+
+/* --- effet de repos --- */
+.rest-panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
+.rest-title{font-size:13px;font-weight:500;margin-bottom:10px}
+.rest-ctrl{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.rest-ctrl label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.rest-ctrl input[type=range]{width:110px}

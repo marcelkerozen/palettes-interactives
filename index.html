@@ -17,6 +17,7 @@
     <button data-view="overview" class="on">Vue d'ensemble</button>
     <button data-view="console">Console palette</button>
     <button data-view="effects">Effets</button>
+    <button data-view="global">Effets globaux</button>
   </nav>
 
   <div id="views">
@@ -27,7 +28,17 @@
         <h2>Palettes connectées</h2>
         <span id="ovInfo" class="muted"></span>
       </div>
-      <div id="ovGrid" class="ov-grid"></div>
+      <div class="subtabs">
+        <button data-sub="cards" class="on">Cartes</button>
+        <button data-sub="plan">Plan 2D</button>
+      </div>
+      <div id="ovCards">
+        <div id="ovGrid" class="ov-grid"></div>
+      </div>
+      <div id="ovPlan" hidden>
+        <div class="plan-hint muted">Glisse les palettes pour reproduire leur disposition réelle sur le site. Les effets globaux suivent ce plan.</div>
+        <div id="planArea" class="plan-area"></div>
+      </div>
     </section>
 
     <!-- CONSOLE PALETTE -->
@@ -67,6 +78,15 @@
           <button class="btn small primary" id="newFx">+ Nouvel effet</button>
         </div>
       </div>
+      <div class="rest-panel">
+        <div class="rest-title">Effet de repos <span class="muted">— quand rien n'est posé sur la palette</span></div>
+        <div class="rest-ctrl">
+          <label>Type <select id="restType"></select></label>
+          <label>Couleur <input type="color" id="restColor" value="#1d9e75"></label>
+          <label>Vitesse <input type="range" id="restSpeed" min="1" max="10" value="3"></label>
+          <label>Luminosité <input type="range" id="restBright" min="4" max="80" value="32"></label>
+        </div>
+      </div>
       <div id="fxList" class="fx-list"></div>
 
       <!-- ÉDITEUR -->
@@ -96,6 +116,29 @@
             <div class="lbl">Aperçu</div>
             <div id="edGrid" class="ed-grid"></div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EFFETS GLOBAUX -->
+    <section id="view-global" class="view">
+      <div class="viewhead">
+        <h2>Effets globaux</h2>
+        <span class="muted">un même effet qui traverse toutes les palettes en même temps</span>
+      </div>
+      <div class="global-wrap">
+        <div class="global-ctrl">
+          <div class="row"><label>Effet global</label><select id="gType"></select></div>
+          <div class="row" id="gColorsRow"><label>Couleurs</label><div id="gColors" class="ed-colors"></div></div>
+          <div class="row"><label>Vitesse — <span id="gSpeedV">5</span></label><input type="range" id="gSpeed" min="1" max="10" value="5"></div>
+          <div class="row"><label>Luminosité — <span id="gBrightV">85</span>%</label><input type="range" id="gBright" min="10" max="100" value="85"></div>
+          <button class="btn primary" id="gLaunch">▶ Lancer sur les palettes</button>
+          <button class="btn" id="gStop">■ Arrêter</button>
+          <div class="count" id="gMsg"></div>
+        </div>
+        <div class="global-preview">
+          <div class="lbl">Aperçu — l'effet se propage de palette en palette</div>
+          <div id="gStrip" class="global-strip"></div>
         </div>
       </div>
     </section>

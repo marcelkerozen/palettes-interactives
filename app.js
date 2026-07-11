@@ -12,13 +12,22 @@ let effects = [
 let nextFxId = 5;
 
 let pallets = [
-  {id:1, name:'Palette 1', cups:new Set([{r:7,c:8}]), effectId:1},
-  {id:2, name:'Palette 2', cups:new Set(),            effectId:2},
-  {id:3, name:'Palette 3', cups:new Set([{r:5,c:5},{r:9,c:10}]), effectId:3},
+  {id:1, name:'Palette 1', cups:new Set([{r:7,c:8}]), effectId:1, pos:{x:40,y:60}},
+  {id:2, name:'Palette 2', cups:new Set(),            effectId:2, pos:{x:190,y:60}},
+  {id:3, name:'Palette 3', cups:new Set([{r:5,c:5},{r:9,c:10}]), effectId:3, pos:{x:340,y:60}},
 ];
 let nextPalId = 4;
 
-let ui = { view:'overview', activePal:1, editing:null, t:0 };
+// effet joué par une palette quand rien n'est posé dessus (repos)
+const REST_TYPES = [
+  {id:'off',     name:'Éteint'},
+  {id:'breath',  name:'Respiration'},
+  {id:'wave',    name:'Vague lente'},
+  {id:'sparkle', name:'Scintillement'}
+];
+let restFx = { type:'breath', color:'#1d9e75', speed:3, brightness:32 };
+
+let ui = { view:'overview', ovSub:'cards', activePal:1, editing:null, t:0 };
 
 // ---------- helpers détection / rendu ----------
 function effById(id){ return effects.find(e=>e.id===id) || effects[0]; }
@@ -80,13 +89,35 @@ function buildGrid(container, cellPx, clickable){
   }
   return cells;
 }
+// effet de repos (rien posé) : anime toute la grille
+function restCellStyle(i,t,rf){
+  if(rf.type==='off') return null;
+  const sp=rf.speed||3; let op=(rf.brightness||32)/100; const col=rf.color||'#1d9e75';
+  const r=Math.floor(i/N),c=i%N;
+  if(rf.type==='breath'){ op*=0.3+0.7*(0.5+0.5*Math.sin(t*sp/40)); }
+  else if(rf.type==='wave'){ op*=0.15+0.85*(0.5+0.5*Math.sin((c+r)*0.4 - t*sp/25)); }
+  else if(rf.type==='sparkle'){ const s=Math.sin(i*12.9898+Math.floor(t*sp/22)*78.233)*43758.5453; const f=s-Math.floor(s); op*= f>0.86?f:0.05; }
+  return {col, op:Math.max(0.04,Math.min(1,op))};
+}
+function applyCell(el,s){
+  if(s){ el.style.background=s.col; el.style.opacity=(0.3+0.7*s.op); el.style.boxShadow=`0 0 ${5*s.op}px ${s.col}`; }
+  else { el.style.background=''; el.style.opacity=1; el.style.boxShadow=''; }
+}
 function paint(cells, pal, eff, t){
+  const empty = pal.cups.size===0;
   const fp=footprint(pal), edge=contourOf(fp);
   cells.forEach((el,i)=>{
     el.classList.toggle('cup', fp.has(i));
-    const s=cellStyle(i,fp,edge,eff,t);
-    if(s){ el.style.background=s.col; el.style.opacity=(0.35+0.65*s.op); el.style.boxShadow=`0 0 ${5*s.op}px ${s.col}`; }
-    else { el.style.background=''; el.style.opacity=1; el.style.boxShadow=''; }
+    applyCell(el, empty ? restCellStyle(i,t,restFx) : cellStyle(i,fp,edge,eff,t));
+  });
+}
+// rendu spatial d'un effet global sur une palette selon sa position dans le plan
+function paintGlobalSpatial(cells, pal, t){
+  const wx0=pal.pos.x/7, wy0=pal.pos.y/7;
+  cells.forEach((el,i)=>{
+    const r=Math.floor(i/N),c=i%N;
+    el.classList.remove('cup');
+    applyCell(el, globalCellStyle(wx0+c, wy0+r, t, globalFx));
   });
 }
 
@@ -98,12 +129,29 @@ function setView(v){
   if(v==='overview') renderOverview();
   if(v==='console')  renderConsole();
   if(v==='effects')  renderEffects();
+  if(v==='global')   renderGlobal();
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 
 // ---------- vue d'ensemble ----------
-let ovCells = {}; // palId -> cells
+let ovCells = {};    // palId -> cells (cartes)
+let planCells = {};  // palId -> cells (plan 2D)
+
 function renderOverview(){
+  document.getElementById('ovInfo').textContent = `${pallets.length} palette${pallets.length>1?'s':''} · bus RS485`;
+  setOvSub(ui.ovSub);
+}
+function setOvSub(sub){
+  ui.ovSub=sub;
+  document.querySelectorAll('.subtabs button').forEach(b=>b.classList.toggle('on',b.dataset.sub===sub));
+  document.getElementById('ovCards').hidden = sub!=='cards';
+  document.getElementById('ovPlan').hidden = sub!=='plan';
+  if(sub==='cards') renderCards();
+  if(sub==='plan')  renderPlan();
+}
+document.querySelectorAll('.subtabs button').forEach(b=>b.addEventListener('click',()=>setOvSub(b.dataset.sub)));
+
+function renderCards(){
   const wrap=document.getElementById('ovGrid');
   wrap.innerHTML=''; ovCells={};
   pallets.forEach(p=>{
@@ -116,11 +164,36 @@ function renderOverview(){
        <div class="mini"></div>
        <div class="meta"><span>${p.cups.size} cup${p.cups.size>1?'s':''}</span><span class="fxname">${eff.name}</span></div>`;
     wrap.appendChild(card);
-    const mini=card.querySelector('.mini');
-    ovCells[p.id]=buildGrid(mini, 9, false);
+    ovCells[p.id]=buildGrid(card.querySelector('.mini'), 9, false);
   });
-  document.getElementById('ovInfo').textContent = `${pallets.length} palette${pallets.length>1?'s':''} · bus RS485`;
 }
+function renderPlan(){
+  const area=document.getElementById('planArea');
+  area.innerHTML=''; planCells={};
+  pallets.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='plan-pal';
+    el.style.left=p.pos.x+'px'; el.style.top=p.pos.y+'px';
+    const g=document.createElement('div'); g.className='p-grid';
+    const nm=document.createElement('div'); nm.className='p-name'; nm.textContent=p.name;
+    el.appendChild(g); el.appendChild(nm); area.appendChild(el);
+    planCells[p.id]=buildGrid(g,7,false);
+    el.addEventListener('mousedown',e=>{
+      planDrag={p,el,sx:e.clientX,sy:e.clientY,ox:p.pos.x,oy:p.pos.y,area};
+      el.classList.add('drag'); e.preventDefault();
+    });
+  });
+}
+let planDrag=null;
+document.addEventListener('mousemove',e=>{
+  if(!planDrag) return;
+  const {p,el,sx,sy,ox,oy,area}=planDrag;
+  let nx=ox+(e.clientX-sx), ny=oy+(e.clientY-sy);
+  nx=Math.max(0,Math.min(area.clientWidth-122, nx));
+  ny=Math.max(0,Math.min(area.clientHeight-122, ny));
+  p.pos.x=nx; p.pos.y=ny; el.style.left=nx+'px'; el.style.top=ny+'px';
+});
+document.addEventListener('mouseup',()=>{ if(planDrag){ planDrag.el.classList.remove('drag'); planDrag=null; } });
 
 // ---------- console ----------
 let consoleCells = null;
@@ -189,8 +262,23 @@ document.getElementById('applyAll').addEventListener('click',()=>{
   _applyMsgTimer=setTimeout(()=>{ m.classList.remove('show'); m.textContent=''; }, 2800);
 });
 
+// ---------- effet de repos ----------
+function renderRestControls(){
+  const sel=document.getElementById('restType'); sel.innerHTML='';
+  REST_TYPES.forEach(rt=>{ const o=document.createElement('option'); o.value=rt.id; o.textContent=rt.name; sel.appendChild(o); });
+  sel.value=restFx.type;
+  document.getElementById('restColor').value=restFx.color;
+  document.getElementById('restSpeed').value=restFx.speed;
+  document.getElementById('restBright').value=restFx.brightness;
+}
+document.getElementById('restType').addEventListener('change',e=>{ restFx.type=e.target.value; });
+document.getElementById('restColor').addEventListener('input',e=>{ restFx.color=e.target.value; });
+document.getElementById('restSpeed').addEventListener('input',e=>{ restFx.speed=+e.target.value; });
+document.getElementById('restBright').addEventListener('input',e=>{ restFx.brightness=+e.target.value; });
+
 // ---------- effets : liste + CRUD ----------
 function renderEffects(){
+  renderRestControls();
   const wrap=document.getElementById('fxList'); wrap.innerHTML='';
   effects.forEach(e=>{
     const used=pallets.filter(p=>p.effectId===e.id).length;
@@ -292,13 +380,95 @@ document.getElementById('randomFx').addEventListener('click',()=>{
   openEditor(e.id); // ouvre direct pour ajuster si besoin
 });
 
+// ---------- effets globaux (inter-palettes) ----------
+const GLOBAL_TYPES=[
+  {id:'wave',name:'Vague traversante'},
+  {id:'sync',name:'Pulsation synchronisée'},
+  {id:'rainbow',name:'Arc-en-ciel global'},
+  {id:'chase',name:'Comète inter-palettes'}
+];
+let globalFx={active:false,type:'wave',colors:['#5dcaa5','#378add'],speed:5,brightness:85};
+let gStripCells=[]; // une grille de cellules par palette, dans l'ordre du bus
+
+function mixHex(a,b,m){
+  const pa=parseInt(a.slice(1),16),pb=parseInt(b.slice(1),16);
+  const ar=(pa>>16)&255,ag=(pa>>8)&255,ab=pa&255,br=(pb>>16)&255,bg=(pb>>8)&255,bb=pb&255;
+  return `rgb(${Math.round(ar+(br-ar)*m)},${Math.round(ag+(bg-ag)*m)},${Math.round(ab+(bb-ab)*m)})`;
+}
+function totalCols(){ return Math.max(1,pallets.length)*N; }
+// gx = colonne globale (continue à travers toutes les palettes), gy = ligne
+function globalCellStyle(gx,gy,t,gf){
+  const sp=gf.speed||5; let col=gf.colors[0]||'#5dcaa5', op=(gf.brightness||85)/100;
+  if(gf.type==='wave'){ const w=0.5+0.5*Math.sin(gx*0.35 - t*sp/9); op*=0.2+0.8*w; if(gf.colors.length>1) col=mixHex(gf.colors[0],gf.colors[1],w); }
+  else if(gf.type==='sync'){ const w=0.5+0.5*Math.sin(t*sp/18); op*=0.25+0.75*w; if(gf.colors.length>1) col=mixHex(gf.colors[0],gf.colors[1],w); }
+  else if(gf.type==='rainbow'){ const h=(gx*7+gy*3+t*sp)%360; col=`hsl(${h},70%,60%)`; }
+  else if(gf.type==='chase'){ const span=totalCols()+18; const pos=(t*sp/6)%span; const d=Math.abs(gx-pos); op*= d<6?(1-d/6):0.05; }
+  return {col,op:Math.max(0.05,Math.min(1,op))};
+}
+function paintGlobal(){
+  gStripCells.forEach((cells,k)=>{
+    cells.forEach((el,i)=>{
+      const r=Math.floor(i/N),c=i%N;
+      const s=globalCellStyle(k*N+c,r,ui.t,globalFx);
+      el.style.background=s.col; el.style.opacity=(0.12+0.88*s.op);
+      el.style.boxShadow = s.op>0.45?`0 0 4px ${s.col}`:'';
+    });
+  });
+}
+function renderGColors(){
+  const box=document.getElementById('gColors'); box.innerHTML='';
+  globalFx.colors.forEach((c,idx)=>{
+    const w=document.createElement('div'); w.className='ed-color-wrap';
+    w.innerHTML=`<input type="color" value="${c}">`;
+    w.querySelector('input').addEventListener('input',e=>{ globalFx.colors[idx]=e.target.value; });
+    box.appendChild(w);
+  });
+}
+function renderGlobal(){
+  const sel=document.getElementById('gType'); sel.innerHTML='';
+  GLOBAL_TYPES.forEach(g=>{ const o=document.createElement('option'); o.value=g.id; o.textContent=g.name; sel.appendChild(o); });
+  sel.value=globalFx.type;
+  renderGColors();
+  document.getElementById('gColorsRow').style.opacity = globalFx.type==='rainbow'?0.4:1;
+  document.getElementById('gSpeed').value=globalFx.speed; document.getElementById('gSpeedV').textContent=globalFx.speed;
+  document.getElementById('gBright').value=globalFx.brightness; document.getElementById('gBrightV').textContent=globalFx.brightness;
+  const strip=document.getElementById('gStrip'); strip.innerHTML=''; gStripCells=[];
+  pallets.forEach((p,k)=>{
+    if(k>0){ const link=document.createElement('div'); link.className='global-link'; link.textContent='→'; strip.appendChild(link); }
+    const box=document.createElement('div'); box.className='global-pal';
+    const g=document.createElement('div'); g.className='g-grid';
+    const nm=document.createElement('div'); nm.className='g-name'; nm.textContent=p.name;
+    box.appendChild(g); box.appendChild(nm); strip.appendChild(box);
+    gStripCells.push(buildGrid(g,7,false));
+  });
+}
+document.getElementById('gType').addEventListener('change',e=>{ globalFx.type=e.target.value; document.getElementById('gColorsRow').style.opacity=globalFx.type==='rainbow'?0.4:1; });
+document.getElementById('gSpeed').addEventListener('input',e=>{ globalFx.speed=+e.target.value; document.getElementById('gSpeedV').textContent=e.target.value; });
+document.getElementById('gBright').addEventListener('input',e=>{ globalFx.brightness=+e.target.value; document.getElementById('gBrightV').textContent=e.target.value; });
+document.getElementById('gLaunch').addEventListener('click',()=>{
+  globalFx.active=true;
+  const name=(GLOBAL_TYPES.find(g=>g.id===globalFx.type)||{}).name||'';
+  document.getElementById('gMsg').textContent=`« ${name} » diffusé sur le bus → ${pallets.length} palettes synchronisées`;
+});
+document.getElementById('gStop').addEventListener('click',()=>{
+  globalFx.active=false;
+  document.getElementById('gMsg').textContent='Effet global arrêté — retour aux effets par palette';
+});
+
 // ---------- boucle d'animation ----------
 function tick(){
   ui.t++;
   if(ui.view==='console' && consoleCells){
     const p=palById(ui.activePal); if(p) paint(consoleCells, p, effById(p.effectId), ui.t);
   } else if(ui.view==='overview'){
-    pallets.forEach(p=>{ if(ovCells[p.id]) paint(ovCells[p.id], p, effById(p.effectId), ui.t); });
+    const cellsMap = ui.ovSub==='plan' ? planCells : ovCells;
+    pallets.forEach(p=>{
+      const cells=cellsMap[p.id]; if(!cells) return;
+      if(globalFx.active) paintGlobalSpatial(cells, p, ui.t);
+      else paint(cells, p, effById(p.effectId), ui.t);
+    });
+  } else if(ui.view==='global'){
+    paintGlobal();
   }
   if(ui.editing!=null && edCells && edState){
     paint(edCells, edPreviewPal, edState, ui.t);
