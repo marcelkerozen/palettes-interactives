@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palettes interactives</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Palettes interactives</h1>
+    <div class="bus"><span class="dot"></span><span id="busTxt">Bus RS485 · 3 palettes en ligne</span></div>
+  </header>
+
+  <nav class="tabs">
+    <button data-view="overview" class="on">Vue d'ensemble</button>
+    <button data-view="console">Console palette</button>
+    <button data-view="effects">Effets</button>
+  </nav>
+
+  <div id="views">
+
+    <!-- VUE D'ENSEMBLE -->
+    <section id="view-overview" class="view">
+      <div class="viewhead">
+        <h2>Palettes connectées</h2>
+        <span id="ovInfo" class="muted"></span>
+      </div>
+      <div id="ovGrid" class="ov-grid"></div>
+    </section>
+
+    <!-- CONSOLE PALETTE -->
+    <section id="view-console" class="view">
+      <div class="console">
+        <aside>
+          <div class="lbl">Palettes</div>
+          <div id="palList"></div>
+          <button class="btn" id="addPal">+ Ajouter une palette</button>
+        </aside>
+        <main>
+          <div class="stage">
+            <div class="cap">
+              <h2 id="stageName">Palette 1</h2>
+              <span id="stageState" class="muted">clique pour poser un eco cup</span>
+            </div>
+            <div class="stage-ctrl">
+              <label>Effet :
+                <select id="palEffect"></select>
+              </label>
+              <button class="btn small" id="applyAll">Appliquer à toutes</button>
+            </div>
+            <div id="grid"></div>
+          </div>
+          <div class="hint">Chaque case = une cellule Velostat. Clique pour poser/retirer un eco cup : la matrice détecte l'empreinte et les LED dessinent son contour avec l'effet choisi.</div>
+        </main>
+      </div>
+    </section>
+
+    <!-- EFFETS -->
+    <section id="view-effects" class="view">
+      <div class="viewhead">
+        <h2>Bibliothèque d'effets</h2>
+        <div class="fx-actions">
+          <button class="btn small" id="randomFx">🎲 Effet aléatoire</button>
+          <button class="btn small primary" id="newFx">+ Nouvel effet</button>
+        </div>
+      </div>
+      <div id="fxList" class="fx-list"></div>
+
+      <!-- ÉDITEUR -->
+      <div id="fxEditor" class="fx-editor" hidden>
+        <div class="fx-editor-head"><h3 id="edTitle">Nouvel effet</h3><button class="x" id="edClose" aria-label="Fermer">✕</button></div>
+        <div class="fx-editor-body">
+          <div class="ed-form">
+            <div class="row"><label>Nom</label><input type="text" id="edName" placeholder="Mon effet"></div>
+            <div class="row"><label>Type</label>
+              <select id="edType">
+                <option value="contour">Contour</option>
+                <option value="fill">Remplissage</option>
+                <option value="pulse">Pulsation</option>
+                <option value="rainbow">Arc-en-ciel</option>
+                <option value="chase">Poursuite</option>
+              </select>
+            </div>
+            <div class="row" id="edColorsRow"><label>Couleurs</label><div id="edColors" class="ed-colors"></div><button class="btn tiny" id="edAddColor">+ couleur</button></div>
+            <div class="row"><label>Vitesse — <span id="edSpeedV">5</span></label><input type="range" id="edSpeed" min="1" max="10" value="5"></div>
+            <div class="row"><label>Luminosité — <span id="edBrightV">80</span>%</label><input type="range" id="edBright" min="10" max="100" value="80"></div>
+            <div class="ed-buttons">
+              <button class="btn" id="edCancel">Annuler</button>
+              <button class="btn primary" id="edSave">Enregistrer</button>
+            </div>
+          </div>
+          <div class="ed-preview">
+            <div class="lbl">Aperçu</div>
+            <div id="edGrid" class="ed-grid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
