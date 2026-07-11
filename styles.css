@@ -60,6 +60,8 @@ aside .btn{width:100%}
 .stage .cap h2{font-size:15px;font-weight:600}
 .stage-ctrl{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .stage-ctrl label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.applymsg{min-height:18px;margin:-4px 0 12px;font-size:12px;color:var(--accent);opacity:0;transition:opacity .2s}
+.applymsg.show{opacity:1}
 #grid{display:grid;gap:3px;background:var(--panel2);padding:10px;border-radius:10px}
 .cell{width:20px;height:20px;border-radius:4px;background:var(--off);transition:background .12s,box-shadow .12s;cursor:pointer}
 .cell.cup{background:#2c333d}

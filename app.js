@@ -177,9 +177,16 @@ document.getElementById('addPal').addEventListener('click',addPal);
 document.getElementById('palEffect').addEventListener('change',e=>{
   const p=palById(ui.activePal); if(p) p.effectId=+e.target.value;
 });
+let _applyMsgTimer=null;
 document.getElementById('applyAll').addEventListener('click',()=>{
   const p=palById(ui.activePal); if(!p) return;
+  const eff=effById(p.effectId);
   pallets.forEach(x=>x.effectId=p.effectId);
+  const m=document.getElementById('applyMsg');
+  m.textContent=`Effet « ${eff.name} » appliqué à ${pallets.length} palette${pallets.length>1?'s':''}`;
+  m.classList.add('show');
+  clearTimeout(_applyMsgTimer);
+  _applyMsgTimer=setTimeout(()=>{ m.classList.remove('show'); m.textContent=''; }, 2800);
 });
 
 // ---------- effets : liste + CRUD ----------
