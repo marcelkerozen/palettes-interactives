@@ -111,9 +111,17 @@ function paint(cells, pal, eff, t){
     applyCell(el, empty ? restCellStyle(i,t,restFx) : cellStyle(i,fp,edge,eff,t));
   });
 }
-// rendu spatial d'un effet global sur une palette selon sa position dans le plan
+// ordre spatial gauche->droite des palettes (pour la comète)
+const CHASE_GAP = 8;
+function assignChaseOrder(){
+  [...pallets].sort((a,b)=> (a.pos.x-b.pos.x) || (a.pos.y-b.pos.y)).forEach((p,k)=> p._ord=k);
+}
+// rendu d'un effet global sur une palette selon sa position dans le plan
 function paintGlobalSpatial(cells, pal, t){
-  const wx0=pal.pos.x/7, wy0=pal.pos.y/7;
+  // la comète suit l'ordre des palettes (écart constant) ; les autres suivent la distance réelle
+  const chase = globalFx.type==='chase';
+  const wx0 = chase ? (pal._ord||0)*(N+CHASE_GAP) : pal.pos.x/7;
+  const wy0 = chase ? 0 : pal.pos.y/7;
   cells.forEach((el,i)=>{
     const r=Math.floor(i/N),c=i%N;
     el.classList.remove('cup');
@@ -473,7 +481,7 @@ function tick(){
     const p=palById(ui.activePal); if(p) paint(consoleCells, p, effById(p.effectId), ui.t);
   } else if(ui.view==='overview'){
     const cellsMap = ui.ovSub==='plan' ? planCells : ovCells;
-    if(globalFx.active) gChaseSpan = spatialSpan();
+    if(globalFx.active && globalFx.type==='chase'){ assignChaseOrder(); gChaseSpan = pallets.length*(N+CHASE_GAP)+20; }
     pallets.forEach(p=>{
       const cells=cellsMap[p.id]; if(!cells) return;
       if(globalFx.active) paintGlobalSpatial(cells, p, ui.t);
