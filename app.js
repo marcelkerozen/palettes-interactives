@@ -109,8 +109,8 @@ function applyCell(el,s){
   else { el.style.background=''; el.style.opacity=1; el.style.boxShadow=''; }
 }
 function paint(cells, pal, eff, t){
-  const empty = pal.cups.size===0;
   const fp=footprint(pal), edge=contourOf(fp);
+  const empty = fp.size===0;   // repos seulement si AUCUNE cellule détectée (cups OU réseau)
   cells.forEach((el,i)=>{
     el.classList.toggle('cup', fp.has(i));
     applyCell(el, empty ? restCellStyle(i,t,restFx) : cellStyle(i,fp,edge,eff,t));
@@ -171,7 +171,7 @@ function renderCards(){
     const card=document.createElement('div');
     card.className='ov-card';
     card.addEventListener('click',()=>{ ui.activePal=p.id; setView('console'); });
-    const eff=effById(p.effectId);
+    const eff=curEffect(p);
     card.innerHTML =
       `<div class="top"><span class="nm">${p.name}</span><span class="dot"></span></div>
        <div class="mini"></div>

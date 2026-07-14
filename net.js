@@ -37,8 +37,9 @@
     }catch(err){ setTimeout(connect, 2000); }
   }
 
+  const TYPE_LABEL = {contour:'Contour', fill:'Remplissage', pulse:'Pulsation', rainbow:'Arc-en-ciel', chase:'Poursuite'};
   function normEffect(e){
-    return { id:-1, name:e.name||'réseau', type:e.type||'contour',
+    return { id:-1, name:e.name||TYPE_LABEL[e.type]||e.type||'réseau', type:e.type||'contour',
              colors:[e.color||'#5dcaa5'], speed:e.speed||5, brightness:e.bright||80 };
   }
 
