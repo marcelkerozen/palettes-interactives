@@ -35,6 +35,7 @@ function palById(id){ return pallets.find(p=>p.id===id); }
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 
 function footprint(p){
+  if(p.liveCells) return p.liveCells;   // cellules réellement détectées par l'ESP32 (mode connecté)
   const set=new Set();
   for(const cup of p.cups){
     for(let dr=-3;dr<=3;dr++)for(let dc=-3;dc<=3;dc++){
@@ -257,6 +258,7 @@ function removePal(id){
 document.getElementById('addPal').addEventListener('click',addPal);
 document.getElementById('palEffect').addEventListener('change',e=>{
   const p=palById(ui.activePal); if(p) p.effectId=+e.target.value;
+  window.paletteNet && window.paletteNet.pushEffect();
 });
 let _applyMsgTimer=null;
 document.getElementById('applyAll').addEventListener('click',()=>{
@@ -279,10 +281,10 @@ function renderRestControls(){
   document.getElementById('restSpeed').value=restFx.speed;
   document.getElementById('restBright').value=restFx.brightness;
 }
-document.getElementById('restType').addEventListener('change',e=>{ restFx.type=e.target.value; });
-document.getElementById('restColor').addEventListener('input',e=>{ restFx.color=e.target.value; });
-document.getElementById('restSpeed').addEventListener('input',e=>{ restFx.speed=+e.target.value; });
-document.getElementById('restBright').addEventListener('input',e=>{ restFx.brightness=+e.target.value; });
+document.getElementById('restType').addEventListener('change',e=>{ restFx.type=e.target.value; window.paletteNet&&window.paletteNet.pushEffect(); });
+document.getElementById('restColor').addEventListener('input',e=>{ restFx.color=e.target.value; window.paletteNet&&window.paletteNet.pushEffect(); });
+document.getElementById('restSpeed').addEventListener('input',e=>{ restFx.speed=+e.target.value; window.paletteNet&&window.paletteNet.pushEffect(); });
+document.getElementById('restBright').addEventListener('input',e=>{ restFx.brightness=+e.target.value; window.paletteNet&&window.paletteNet.pushEffect(); });
 
 // ---------- effets : liste + CRUD ----------
 function renderEffects(){
@@ -366,6 +368,7 @@ document.getElementById('edSave').addEventListener('click',()=>{
   if(ui.editing==='new'){ edState.id=nextFxId++; effects.push(edState); }
   else { const i=effects.findIndex(e=>e.id===ui.editing); if(i>=0) effects[i]=edState; }
   closeEditor(); renderEffects();
+  window.paletteNet && window.paletteNet.pushEffect();
 });
 
 // ---------- génération aléatoire ----------
