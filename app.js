@@ -59,6 +59,23 @@ function contourOf(fp){
   }
   return edge;
 }
+// nombre d'objets posés = nombre d'amas de cellules connectées dans l'empreinte
+function countObjects(fp){
+  if(!fp || fp.size===0) return 0;
+  const seen=new Set(); let n=0;
+  for(const start of fp){
+    if(seen.has(start)) continue;
+    n++; const stack=[start]; seen.add(start);
+    while(stack.length){
+      const i=stack.pop(), r=Math.floor(i/N), c=i%N;
+      for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+        const rr=r+dr, cc=c+dc, j=rr*N+cc;
+        if(rr>=0&&cc>=0&&rr<N&&cc<N && fp.has(j) && !seen.has(j)){ seen.add(j); stack.push(j); }
+      }
+    }
+  }
+  return n;
+}
 // style d'une cellule pour un effet donné
 function cellStyle(i, fp, edge, eff, t){
   const onEdge=edge.has(i), inFill=fp.has(i);
@@ -148,6 +165,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',
 
 // ---------- vue d'ensemble ----------
 let ovCells = {};    // palId -> cells (cartes)
+let ovMeta = {};     // palId -> {fx, cup} éléments à rafraîchir en direct
 let planCells = {};  // palId -> cells (plan 2D)
 
 function renderOverview(){
@@ -166,7 +184,7 @@ document.querySelectorAll('.subtabs button').forEach(b=>b.addEventListener('clic
 
 function renderCards(){
   const wrap=document.getElementById('ovGrid');
-  wrap.innerHTML=''; ovCells={};
+  wrap.innerHTML=''; ovCells={}; ovMeta={};
   pallets.forEach(p=>{
     const card=document.createElement('div');
     card.className='ov-card';
@@ -178,6 +196,7 @@ function renderCards(){
        <div class="meta"><span>${p.cups.size} cup${p.cups.size>1?'s':''}</span><span class="fxname">${eff.name}</span></div>`;
     wrap.appendChild(card);
     ovCells[p.id]=buildGrid(card.querySelector('.mini'), 9, false);
+    ovMeta[p.id]={ fx:card.querySelector('.fxname'), cup:card.querySelector('.meta span') };
   });
 }
 function renderPlan(){
@@ -493,6 +512,14 @@ function tick(){
       const cells=cellsMap[p.id]; if(!cells) return;
       if(globalFx.active) paintGlobalSpatial(cells, p, ui.t);
       else paint(cells, p, curEffect(p), ui.t);
+      // rafraîchit en direct l'étiquette effet + l'état sous chaque carte
+      if(ui.ovSub==='cards' && ovMeta[p.id]){
+        const nm = globalFx.active ? 'effet global' : curEffect(p).name;
+        if(ovMeta[p.id].fx.textContent!==nm) ovMeta[p.id].fx.textContent=nm;
+        const n = countObjects(footprint(p));
+        const det = `${n} cup${n>1?'s':''}`;
+        if(ovMeta[p.id].cup.textContent!==det) ovMeta[p.id].cup.textContent=det;
+      }
     });
   } else if(ui.view==='global'){
     paintGlobal();

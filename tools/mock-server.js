@@ -77,9 +77,22 @@ wss.on('connection', ws=>{
   ws.on('close', ()=> console.log('App déconnectée'));
 });
 
+// effet global sur toutes les palettes (comète, vague, arc-en-ciel, pulsation synchro)
+const GLOBAL_TYPES = ['chase','wave','rainbow','sync'];
+function runGlobal(){
+  const type = rnd(GLOBAL_TYPES);
+  const colors = [rnd(PALETTE), rnd(PALETTE)];
+  console.log(`~~ EFFET GLOBAL "${type}" sur toutes les palettes (7 s)`);
+  broadcast({ type:'global', global:{ type, colors, speed:6, bright:90, active:true } });
+  setTimeout(()=>{ console.log('~~ fin de l\'effet global — retour aux effets par palette');
+                   broadcast({ type:'global', global:{ active:false } }); }, 7000);
+}
+
 // scénario : une palette au départ, puis une nouvelle toutes les 7 s ;
-// un effet appliqué au hasard toutes les 5 s ; détections 8 fois/s.
+// un effet par palette au hasard toutes les 5 s ; un effet GLOBAL toutes les 18 s ;
+// détections 8 fois/s.
 addPalette();
 setInterval(addPalette, 7000);
 setInterval(()=>{ if(pallets.length) applyRandomEffect(rnd(pallets).id); }, 5000);
+setInterval(runGlobal, 18000);
 setInterval(tickState, 120);

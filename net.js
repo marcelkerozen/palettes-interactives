@@ -69,6 +69,15 @@
         if(p){ p.liveCells = new Set(msg.cells || []); }
         break;
       }
+      case 'global': {          // effet global déclenché par le serveur (ex. comète)
+        const g = msg.global || {};
+        if(g.type) globalFx.type = g.type;
+        if(g.colors) globalFx.colors = g.colors;
+        if(g.speed) globalFx.speed = g.speed;
+        if(g.bright) globalFx.brightness = g.bright;
+        globalFx.active = g.active !== false;
+        break;
+      }
     }
   }
 
