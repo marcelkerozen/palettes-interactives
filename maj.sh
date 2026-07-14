@@ -8,9 +8,9 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
 echo "→ Récupération de la dernière version..."
-git pull
+git pull --ff-only || echo "(pas de réseau ou pas de nouveauté — on publie la version locale)"
 
 echo "→ Publication vers nginx..."
-sudo cp "$DIR"/index.html "$DIR"/styles.css "$DIR"/app.js "$DIR"/net.js /var/www/html/
+cp "$DIR"/index.html "$DIR"/styles.css "$DIR"/app.js "$DIR"/net.js /var/www/html/
 
 echo "✓ App à jour — http://palint.local"

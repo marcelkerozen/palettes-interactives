@@ -1,0 +1,13 @@
+[Unit]
+Description=Mise a jour de l'app palettes au demarrage (git pull + publication nginx)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=palettes
+WorkingDirectory=/home/palettes/palettes-interactives
+ExecStart=/home/palettes/palettes-interactives/maj.sh
+
+[Install]
+WantedBy=multi-user.target
