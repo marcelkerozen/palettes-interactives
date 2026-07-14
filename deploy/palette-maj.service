@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=oneshot
 User=palettes
 WorkingDirectory=/home/palettes/palettes-interactives
-ExecStart=/home/palettes/palettes-interactives/maj.sh
+ExecStart=/bin/bash /home/palettes/palettes-interactives/maj.sh
 
 [Install]
 WantedBy=multi-user.target
