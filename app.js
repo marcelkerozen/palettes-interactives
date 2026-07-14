@@ -33,6 +33,10 @@ let ui = { view:'overview', ovSub:'cards', activePal:1, editing:null, t:0 };
 function effById(id){ return effects.find(e=>e.id===id) || effects[0]; }
 function palById(id){ return pallets.find(p=>p.id===id); }
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
+// effet à afficher pour une palette : effet imposé par le réseau (liveEffect) sinon celui de la biblio
+function curEffect(p){ return p.liveEffect || effById(p.effectId); }
+// re-rendu de la vue courante (utilisé quand le réseau ajoute/retire une palette)
+window.appRefresh = function(){ if(typeof setView==='function') setView(ui.view); };
 
 function footprint(p){
   if(p.liveCells) return p.liveCells;   // cellules réellement détectées par l'ESP32 (mode connecté)
@@ -481,14 +485,14 @@ document.getElementById('gStop').addEventListener('click',()=>{
 function tick(){
   ui.t++;
   if(ui.view==='console' && consoleCells){
-    const p=palById(ui.activePal); if(p) paint(consoleCells, p, effById(p.effectId), ui.t);
+    const p=palById(ui.activePal); if(p) paint(consoleCells, p, curEffect(p), ui.t);
   } else if(ui.view==='overview'){
     const cellsMap = ui.ovSub==='plan' ? planCells : ovCells;
     if(globalFx.active && globalFx.type==='chase'){ assignChaseOrder(); gChaseSpan = pallets.length*(N+CHASE_GAP)+20; }
     pallets.forEach(p=>{
       const cells=cellsMap[p.id]; if(!cells) return;
       if(globalFx.active) paintGlobalSpatial(cells, p, ui.t);
-      else paint(cells, p, effById(p.effectId), ui.t);
+      else paint(cells, p, curEffect(p), ui.t);
     });
   } else if(ui.view==='global'){
     paintGlobal();

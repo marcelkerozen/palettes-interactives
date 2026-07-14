@@ -1,0 +1,12 @@
+{
+  "name": "palettes-mock-server",
+  "version": "1.0.0",
+  "description": "Serveur de test WebSocket (faux ESP32) pour l'app palettes interactives",
+  "private": true,
+  "scripts": {
+    "start": "node mock-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
