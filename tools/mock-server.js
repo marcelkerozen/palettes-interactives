@@ -18,9 +18,10 @@ const PORT = 8080;
 const PALETTE = ['#5dcaa5','#378add','#ef9f27','#d4537e','#7f77dd','#e24b4a','#1d9e75'];
 const FX_TYPES = ['contour','pulse','rainbow','fill'];
 
-const wss = new WebSocketServer({ port: PORT, path: '/ws' });
-console.log(`Serveur de test WebSocket sur ws://localhost:${PORT}/ws`);
-console.log('Ouvre l\'app avec  ?ws=<hote>:' + PORT + '  (ex http://localhost:8000/?ws=localhost:8080)\n');
+const wss = new WebSocketServer({ host: '0.0.0.0', port: PORT, path: '/ws' });
+wss.on('listening', ()=> console.log(`✓ Serveur EN ÉCOUTE sur 0.0.0.0:${PORT} (/ws)`));
+wss.on('error', e => console.error(`✗ ÉCHEC d'ouverture du port ${PORT} : ${e.code || e.message}`));
+console.log('Ouvre l\'app avec  ?ws=<hote>:' + PORT + '  (ex http://<ip-pi>/?ws=<ip-pi>:8080)\n');
 
 // état simulé des palettes
 let pallets = [];       // { id, name, cx, cy, vx, vy }
